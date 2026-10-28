@@ -1,50 +1,88 @@
 return {
-  -- 1. POSITRON REPL & NOTEBOOK WORKFLOW (via Molten)
-  -- Replicates Positron's interactive environment for Python/R/Julia
+  -- ==========================================================================
+  -- 1. UNIFIED WINDOW & REPL NAVIGATION KEYMAPS
+  -- ==========================================================================
+  {
+    "nvim-treesitter/nvim-treesitter",
+    opts = function()
+      -- Easy directional navigation matching standard window movements
+      vim.keymap.set("n", "<C-h>", "<C-w>h", { desc = "Go to Left Window" })
+      vim.keymap.set("n", "<C-j>", "<C-w>j", { desc = "Go to Lower Window" })
+      vim.keymap.set("n", "<C-k>", "<C-w>k", { desc = "Go to Upper Window" })
+      vim.keymap.set("n", "<C-l>", "<C-w>l", { desc = "Go to Right Window" })
+    end,
+  },
+
+  -- ==========================================================================
+  -- 2. DUAL .ipynb & .py NOTEBOOK SUPPORT (via Jupytext)
+  -- ==========================================================================
+  {
+    "GCBallesteros/jupytext.nvim",
+    opts = {
+      style = "percent",
+      output_extension = "auto",
+      force_ft = "python",
+    },
+    -- Ensures jupytext cli tool is available via Mason
+    config = function(_, opts)
+      require("jupytext").setup(opts)
+    end,
+  },
+
+  -- ==========================================================================
+  -- 3. INTERACTIVE REPL CONSOLE (Iron.nvim)
+  -- ==========================================================================
+  {
+    "Vigemus/iron.nvim",
+    main = "iron.core",
+    opts = {
+      config = {
+        scratch_repl = true,
+        repl_definition = {
+          python = {
+            command = { "ipython", "--no-autoindent" },
+          },
+        },
+        repl_open_cmd = "vertical botright 60 split", -- Side-by-side terminal like Positron
+      },
+      keymaps = {
+        send_motion = "<leader>sc",
+        visual_send = "<leader>sc",
+        send_file = "<leader>sf",
+        clear = "<leader>cl",
+      },
+    },
+    keys = {
+      { "<leader>rs", "<cmd>IronRepl<cr>", desc = "Toggle REPL Console" },
+      { "<leader>rf", "<cmd>IronFocus<cr>", desc = "Focus REPL window" },
+    },
+  },
+
+  -- ==========================================================================
+  -- 4. POSITRON CELL EVALUATION (Molten.nvim)
+  -- ==========================================================================
   {
     "benlubas/molten-nvim",
-    version = "^1.0.0", -- use version tags for stability
+    version = "^1.0.0",
     build = ":UpdateRemotePlugins",
     init = function()
       vim.g.molten_image_provider = "image.nvim"
       vim.g.molten_output_win_max_height = 20
+      -- Treat # %% as cell boundaries for both .py and converted .ipynb files
+      vim.g.molten_auto_open_output = false
     end,
     keys = {
       { "<leader>mi", ":MoltenInit<CR>", desc = "Initialize Molten" },
       { "<leader>me", ":MoltenEvaluateOperator<CR>", desc = "Evaluate Operator" },
       { "<leader>rl", ":MoltenEvaluateLine<CR>", desc = "Evaluate Line" },
       { "<leader>rr", ":MoltenEvaluateVisual<CR>", mode = "v", desc = "Evaluate Visual" },
+      { "<leader>rc", "<cmd>MoltenReevaluateCell<cr>", desc = "Re-evaluate Cell" },
     },
   },
 
-  -- 2. GHOST-TEXT COMPLETIONS (via Copilot or Supermaven)
-  -- Replicates Positron's inline AI grey ghost text completion
-  {
-    "zbirenbaum/copilot.lua",
-    cmd = "Copilot",
-    event = "InsertEnter",
-    opts = {
-      suggestion = {
-        enabled = true,
-        auto_trigger = true,
-        debounce = 75,
-        keymap = {
-          accept = "<Tab>", -- Replicates Positron's Tab-to-accept behavior
-          accept_word = "<C-f>",
-          accept_line = "<C-l>",
-          next = "<M-]>",
-          prev = "<M-[>",
-          dismiss = "<Esc>",
-        },
-      },
-    },
-  },
-
-  -- 3. VARIABLE INSPECTION / CONSOLE SPLIT (via Iron.nvim)
-  -- Gives you the side-by-side terminal console layout of Positron
-  -- (Keep your previous Molten, Copilot, and Iron.nvim settings here...)
-
-  -- 1. WEZTERM GRAPHICS SETUP (via image.nvim)
+  -- ==========================================================================
+  -- 5. WEZTERM INLINE IMAGE PROTOCOL
+  -- ==========================================================================
   {
     "3rd/image.nvim",
     opts = {
@@ -57,24 +95,15 @@ return {
     },
   },
 
-  -- 2. DATAFRAME VIEWER (via dataframes.nvim & VisiData)
-  -- Replicates Positron's "View Dataframe" workspace tab
+  -- ==========================================================================
+  -- 6. DATAFRAME VISUALIZATION (VisiData Integration)
+  -- ==========================================================================
   {
     "andreiamatuni/dataframes.nvim",
-    dependencies = {
-      "mfussenegger/nvim-dap",
-      "mfussenegger/nvim-dap-python",
-    },
+    dependencies = { "mfussenegger/nvim-dap", "mfussenegger/nvim-dap-python" },
     keys = {
-      {
-        "<leader>dv",
-        "<cmd>DFShowDataFrame<cr>",
-        desc = "View DataFrame under Cursor",
-      },
+      { "<leader>dv", "<cmd>DFShowDataFrame<cr>", desc = "View DataFrame under Cursor" },
     },
-    opts = {
-      -- Uses VisiData in an embedded terminal layer to browse, sort, and filter lines
-      viewer = "visidata",
-    },
+    opts = { viewer = "visidata" },
   },
 }
